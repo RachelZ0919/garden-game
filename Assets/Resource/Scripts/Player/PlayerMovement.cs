@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -34,8 +35,34 @@ public class PlayerMovement : MonoBehaviour
     private bool didJump;
     private float yVelocity;
     private PhysicMaterial zeroFrictionMaterial;
-    
-    
+
+
+    #endregion Headbob - Variables
+    public bool useHeadBob = true; //是否使用headbob
+    public Transform head = null; //头（摄像机？）
+    public bool snapHeadjointToCapsul = true; //影响下蹲效果
+    public float headbobFrequency = 1.5f;//频率
+    public float headbobSwayAngle = 5f;//?
+    public float headbobHeight = 3f;//高度
+    public float headbobSideMovement = 5f;//?
+    public float jumpLandIntensity = 3f;//跳跃降落后的摇晃强度
+
+    private Vector3 originalLocalPosition;
+    private float nextStepTime = 0.5f;
+    private float headbobCycle = 0.0f;
+    private float headbobFade = 0.0f;
+    private float springPosition = 0.0f;
+    private float springVelocity = 0.0f;
+    private float springElastic = 1.1f; //弹性系数
+    private float springDampen = 0.8f; //阻力的系数
+    private float springVelocityThreshold = 0.05f;
+    private float springPositionThreshold = 0.05f;
+    private Vector3 previousPosition;
+    private Vector3 previousVelocity = Vector3.zero;
+    private Vector3 miscRefVel; //?
+    private bool previousGrounded;
+    #region
+
     #endregion
 
     #endregion
@@ -64,6 +91,10 @@ public class PlayerMovement : MonoBehaviour
         capsule.sharedMaterial = zeroFrictionMaterial;
 
         #endregion
+
+        #region Headbob - Awake
+        
+        #endregion
     }
 
     private void Start()
@@ -78,6 +109,13 @@ public class PlayerMovement : MonoBehaviour
         #region Player Movement - Start
 
         capsule.radius = capsule.height / 4;
+
+        #endregion
+
+        #region Headbob - Start
+
+        originalLocalPosition = snapHeadjointToCapsul ? new Vector3(head.localPosition.x, (capsule.height / 2) * head.localScale.y, head.localPosition.z) : head.localPosition;
+        previousPosition = rigidbody.position;
 
         #endregion
     }
@@ -138,6 +176,10 @@ public class PlayerMovement : MonoBehaviour
         }
 
         #endregion
+
+        #region Headbob - Update
+        
+        #endregion
     }
 
     private void FixedUpdate()
@@ -176,6 +218,87 @@ public class PlayerMovement : MonoBehaviour
         moveDirection = transform.forward * inputXY.y * speed + transform.right * inputXY.x * speed;
 
         rigidbody.velocity = moveDirection + (Vector3.up * yVelocity);
+
+        #endregion
+        #region Headbob - Update
+        float ypos = 0;
+        float xpos = 0;
+        float zTilt = 0;
+        float xTilt = 0;
+        float bobSwayFactor = 0;
+        float bobFactor = 0;
+        float strideLangthen = 0;
+        float flatVel = 0;
+
+        if (useHeadBob)
+        {
+            Vector3 vel = (rigidbody.position - previousPosition) / Time.deltaTime;
+            Vector3 velChange = vel - previousVelocity;
+            previousPosition = rigidbody.position;
+            previousVelocity = vel;
+
+            springVelocity -= velChange.y;
+            springVelocity -= springPosition * springElastic;
+            springVelocity *= springDampen;
+            springPosition += springVelocity * Time.deltaTime;
+            springPosition = Mathf.Clamp(springPosition, -0.3f, 0.3f);
+
+            if(Mathf.Abs(springVelocity) < springVelocityThreshold && Mathf.Abs(springPosition) < springPositionThreshold)
+            {
+                springPosition = 0;
+                springVelocity = 0;
+            }
+
+            flatVel = new Vector3(vel.x, 0, vel.z).magnitude;
+            strideLangthen = 1 + (flatVel * ((headbobFrequency * 2) / 10));
+            headbobCycle += (flatVel / strideLangthen) * (Time.deltaTime / headbobFrequency);
+            bobFactor = Mathf.Sin(headbobCycle * Mathf.PI * 2);
+            bobSwayFactor = Mathf.Sin(Mathf.PI * (2 * headbobCycle + 0.5f));
+            bobFactor = 1 - (bobFactor * 0.5f + 1);
+            bobFactor *= bobFactor;
+
+            if(jumpLandIntensity > 0)
+            {
+                xTilt = -springPosition * (jumpLandIntensity * 5.5f);
+            }
+            else
+            {
+                xTilt = -springPosition;
+            }
+
+            if (isGrounded)
+            {
+                if(flatVel < 0.1f)
+                {
+                    headbobFade = Mathf.MoveTowards(headbobFade, 0.0f, 0.5f);
+                }
+                else
+                {
+                    headbobFade = Mathf.MoveTowards(headbobFade, 1.0f, Time.deltaTime);
+                }
+                float speedHeightFactor = 1 + (flatVel * 0.3f);
+                xpos = -(headbobSideMovement / 10) * headbobFade * bobSwayFactor;
+                ypos = springPosition * (jumpLandIntensity / 10) + bobFactor * (headbobHeight / 10) * headbobFade * speedHeightFactor;
+                zTilt = bobSwayFactor * (headbobSwayAngle / 10) * headbobFade;
+            }
+
+            if(rigidbody.velocity.magnitude > 0.1f)
+            {
+                head.localPosition = Vector3.MoveTowards(head.localPosition,
+                    snapHeadjointToCapsul ? (new Vector3(originalLocalPosition.x, (capsule.height / 2) * head.localScale.y, originalLocalPosition.z) + new Vector3(xpos, ypos, 0)) :
+                                            originalLocalPosition + new Vector3(xpos, ypos, 0), 
+                    0.5f);
+            }
+            else
+            {
+                head.localPosition = Vector3.SmoothDamp(head.localPosition,
+                    snapHeadjointToCapsul ? (new Vector3(originalLocalPosition.x, (capsule.height / 2) * head.localScale.y, originalLocalPosition.z) + new Vector3(xpos, ypos, 0)) :
+                                            originalLocalPosition + new Vector3(xpos, ypos, 0),
+                    ref miscRefVel, 0.15f);
+            }
+            head.localRotation = Quaternion.Euler(xTilt, 0, zTilt);
+        }
+
 
         #endregion
 
