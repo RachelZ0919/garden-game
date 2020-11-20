@@ -110,7 +110,7 @@ public class EventTrigger : MonoBehaviour
     private void GivePlayerColor()
     {
         isColorAdd = false;
-        player.AddColor(color);
+        player.AddGunColor(color);
         Destroy(gameObject);
     }
 

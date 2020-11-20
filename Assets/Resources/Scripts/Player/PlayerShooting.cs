@@ -13,10 +13,9 @@ public class PlayerShooting : MonoBehaviour
 
     //控制相关
     private LevelGrid selectingGrid;
-    private LevelCube selectingCube;
+    //private LevelCube selectingCube;
     private Vector3 targetPoint;
     private int mouseButtonDown = 0;
-    //public ParticleSystem waterParticle;
 
     //UI
     public GameObject highlight;
@@ -33,10 +32,6 @@ public class PlayerShooting : MonoBehaviour
     private EventTrigger trigger;
     private MeshRenderer renderer;
 
-    //public ParticleSystem[] particles = new ParticleSystem[2];
-
-
-
     void Awake()
     {
         enabledWaterColors = new List<WaterColor>();
@@ -44,20 +39,6 @@ public class PlayerShooting : MonoBehaviour
         renderer = transform.GetComponentInChildren<MeshRenderer>();
     }
 
-
-    public void SetGun(bool b)
-    {
-        if(hasGun != b)
-        {
-            hasGun = b;
-            highlight.SetActive(b);
-            selectingGrid = null;
-            selectingCube = null;
-            renderer.enabled = b;
-        }
-    }
-
-    // Update is called once per frame
     void Update()
     {
         //鼠标输入判断
@@ -137,7 +118,7 @@ public class PlayerShooting : MonoBehaviour
                             if (selectingGrid != null)
                             {
                                 selectingGrid.SprayWater(waterColor);
-                                selectingCube.SprayWaterAtPosition(targetPoint, waterColor);
+                                //selectingCube.SprayAtPosition(targetPoint, waterColor);
                             }
                             fs_big.SetActive(false);
                             fs_small.SetActive(true);
@@ -187,12 +168,9 @@ public class PlayerShooting : MonoBehaviour
         {
             if (selectingGrid != null)
             {
-                debugText.text = $"Position:{selectingGrid.position}   State:{selectingGrid.state}   Luminance:{selectingGrid.luminance}   Type:{selectingGrid.type}";
-                for (int i = 0; i < selectingGrid.grassStates.Length; i++)
-                {
-                    debugText.text += $"\ngrassState[{i}] = {selectingGrid.grassStates[i]}";
-                }
-                LevelGrid grid = selectingGrid.GetNearGrid(NearGridDirection.LEFT);
+                debugText.text = $"Position:{selectingGrid.position}   State:{selectingGrid.state}     Type:{selectingGrid.type}";
+                LevelGrid grid = selectingGrid.GetNearGrid(Direction.LEFT);
+                
                 if (grid != null)
                 {
                     debugText.text += $"\nLEFT:{grid.position} - {grid.groundColor}";
@@ -201,7 +179,7 @@ public class PlayerShooting : MonoBehaviour
                 {
                     debugText.text += "\nLEFT:NULL";
                 }
-                grid = selectingGrid.GetNearGrid(NearGridDirection.RIGHT);
+                grid = selectingGrid.GetNearGrid(Direction.RIGHT);
                 if (grid != null)
                 {
                     debugText.text += $"\nRIGHT:{grid.position} - {grid.groundColor}";
@@ -210,7 +188,7 @@ public class PlayerShooting : MonoBehaviour
                 {
                     debugText.text += "\nRIGHT:NULL";
                 }
-                grid = selectingGrid.GetNearGrid(NearGridDirection.FORWARD);
+                grid = selectingGrid.GetNearGrid(Direction.FORWARD);
                 if (grid != null)
                 {
                     debugText.text += $"\nFORWARD:{grid.position} - {grid.groundColor}";
@@ -219,7 +197,7 @@ public class PlayerShooting : MonoBehaviour
                 {
                     debugText.text += "\nFORWARD:NULL";
                 }
-                grid = selectingGrid.GetNearGrid(NearGridDirection.BACK);
+                grid = selectingGrid.GetNearGrid(Direction.BACK);
                 if (grid != null)
                 {
                     debugText.text += $"\nBACK:{grid.position} - {grid.groundColor}";
@@ -239,8 +217,7 @@ public class PlayerShooting : MonoBehaviour
         }
 
     }
-
-    private void RaycastTrigger()
+    private void RaycastTrigger()//找可交互物体
     {
         int layerMask = 1 << 11;
         RaycastHit hit;
@@ -266,33 +243,30 @@ public class PlayerShooting : MonoBehaviour
             }
         }
     }
-
-    private void RaycastGrid()
+    private void RaycastGrid() //找格子
     {
         int layerMask = 1 << 9 | 1 << 10;
         RaycastHit hit;
         if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, waterGunRange, layerMask))
         {
             targetPoint = hit.point;
-            selectingCube = hit.collider.GetComponent<LevelCube>();
-            if (selectingCube != null)
-            {
-                selectingGrid = selectingCube.GetGridAtPosition(hit.point);
-            }
-            else
-            {
-                selectingGrid = null;
-            }
+            //selectingCube = hit.collider.GetComponent<LevelCube>();
+            //if (selectingCube != null)
+            //{
+            //    selectingGrid = selectingCube.GetGridAtPosition(hit.point);
+            //}
+            //else
+            //{
+            //    selectingGrid = null;
+            //}
         }
         else
         {
             targetPoint = transform.position + transform.TransformDirection(Vector3.forward) * waterGunRange;
             selectingGrid = null;
-            selectingCube = null;
+            //selectingCube = null;
         }
     }
-
-    //Debug用
     private void OnDrawGizmos()
     {
         if (gizmoEnabled)
@@ -305,86 +279,90 @@ public class PlayerShooting : MonoBehaviour
 
                 //back
                 Gizmos.color = Color.red;
-                Gizmos.DrawSphere(selectingGrid.GetNearGrid(NearGridDirection.BACK).position, .05f);
+                Gizmos.DrawSphere(selectingGrid.GetNearGrid(Direction.BACK).position, .05f);
                 Gizmos.DrawLine(selectingGrid.raycastPos[3], selectingGrid.hitPos[3]);
 
                 //forward
                 Gizmos.color = Color.yellow;
-                Gizmos.DrawSphere(selectingGrid.GetNearGrid(NearGridDirection.FORWARD).position, .05f);
+                Gizmos.DrawSphere(selectingGrid.GetNearGrid(Direction.FORWARD).position, .05f);
                 Gizmos.DrawLine(selectingGrid.raycastPos[2], selectingGrid.hitPos[2]);
 
                 //left
                 Gizmos.color = Color.blue;
-                Gizmos.DrawSphere(selectingGrid.GetNearGrid(NearGridDirection.LEFT).position, .05f);
+                Gizmos.DrawSphere(selectingGrid.GetNearGrid(Direction.LEFT).position, .05f);
                 Gizmos.DrawLine(selectingGrid.raycastPos[1], selectingGrid.hitPos[1]);
 
                 //right
                 Gizmos.color = Color.green;
-                Gizmos.DrawSphere(selectingGrid.GetNearGrid(NearGridDirection.RIGHT).position, .05f);
+                Gizmos.DrawSphere(selectingGrid.GetNearGrid(Direction.RIGHT).position, .05f);
                 Gizmos.DrawLine(selectingGrid.raycastPos[0], selectingGrid.hitPos[0]);
             }
         }
-    }
-
-    private void WaterAnimation()
-    {
-        //waterParticle.Play();
-    }
-
+    }//Debug用
     private void HighlightGrid()
     {
-        if (selectingGrid != null)
-        {
-            highlight.SetActive(true);
-            if (selectingGrid.direction == Vector3.up)
-            {
-                highlight.transform.eulerAngles = new Vector3(0, 0, 0);
-            }
-            else if (selectingGrid.direction == Vector3.down)
-            {
-                highlight.transform.eulerAngles = new Vector3(180, 0, 0);
-            }
-            else if (selectingGrid.direction == Vector3.forward)
-            {
-                highlight.transform.eulerAngles = new Vector3(90, 0, 0);
-            }
-            else if (selectingGrid.direction == Vector3.back)
-            {
-                highlight.transform.eulerAngles = new Vector3(-90, 0, 0);
-            }
-            else if (selectingGrid.direction == Vector3.left)
-            {
-                highlight.transform.eulerAngles = new Vector3(0, 0, -90);
-            }
-            else if (selectingGrid.direction == Vector3.right)
-            {
-                highlight.transform.eulerAngles = new Vector3(90, 0, 90);
-            }
-            highlight.transform.position = selectingGrid.position;
-            if (selectingGrid.type == GridType.SOIL || selectingGrid.type == GridType.GROUND)
-            {
-                if (waterColor == WaterColor.BLUE)
-                    highlight.GetComponent<MeshRenderer>().material = Resources.Load<Material>("Material/SceneMats/Water/BlueWaterMat");
-                else
-                    highlight.GetComponent<MeshRenderer>().material = Resources.Load<Material>("Material/SceneMats/Water/RedWaterMat");
-            }
-            else if (selectingGrid.type == GridType.GLASS)
-            {
-                highlight.GetComponent<MeshRenderer>().material = Resources.Load<Material>("Material/SceneMats/Water/GrayMat");
-            }
-        }
-        else highlight.SetActive(false);
+        //if (selectingGrid != null)
+        //{
+        //    highlight.SetActive(true);
+        //    if (selectingGrid.direction == Vector3.up)
+        //    {
+        //        highlight.transform.eulerAngles = new Vector3(0, 0, 0);
+        //    }
+        //    else if (selectingGrid.direction == Vector3.down)
+        //    {
+        //        highlight.transform.eulerAngles = new Vector3(180, 0, 0);
+        //    }
+        //    else if (selectingGrid.direction == Vector3.forward)
+        //    {
+        //        highlight.transform.eulerAngles = new Vector3(90, 0, 0);
+        //    }
+        //    else if (selectingGrid.direction == Vector3.back)
+        //    {
+        //        highlight.transform.eulerAngles = new Vector3(-90, 0, 0);
+        //    }
+        //    else if (selectingGrid.direction == Vector3.left)
+        //    {
+        //        highlight.transform.eulerAngles = new Vector3(0, 0, -90);
+        //    }
+        //    else if (selectingGrid.direction == Vector3.right)
+        //    {
+        //        highlight.transform.eulerAngles = new Vector3(90, 0, 90);
+        //    }
+        //    highlight.transform.position = selectingGrid.position;
+        //    if (selectingGrid.type == GridType.SOIL || selectingGrid.type == GridType.GROUND)
+        //    {
+        //        if (waterColor == WaterColor.BLUE)
+        //            highlight.GetComponent<MeshRenderer>().material = Resources.Load<Material>("Material/SceneMats/Water/BlueWaterMat");
+        //        else
+        //            highlight.GetComponent<MeshRenderer>().material = Resources.Load<Material>("Material/SceneMats/Water/RedWaterMat");
+        //    }
+        //    else if (selectingGrid.type == GridType.GROUND)
+        //    {
+        //        highlight.GetComponent<MeshRenderer>().material = Resources.Load<Material>("Material/SceneMats/Water/GrayMat");
+        //    }
+        //}
+        //else highlight.SetActive(false);
 
-    }
+    }//高亮选中的地块
     public WaterColor getWaterColor()
     {
         return waterColor;
-    }
-
-    public void AddColor(WaterColor color)
+    }//获得玩家当前使用的颜色
+    public void SetGun(bool b)
+    {
+        if (hasGun != b)
+        {
+            hasGun = b;
+            highlight.SetActive(b);
+            selectingGrid = null;
+            //selectingCube = null;
+            renderer.enabled = b;
+        }
+    }//打开或关闭枪
+    public void AddGunColor(WaterColor color)
     {
         enabledWaterColors.Add(color);
         waterColor = enabledWaterColors[currentColor];
-    }
+    }//增加枪可用颜色
 }
 

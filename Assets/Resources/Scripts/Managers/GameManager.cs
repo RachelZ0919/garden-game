@@ -25,15 +25,15 @@ public class GameManager : MonoBehaviour
         DontDestroyOnLoad(this);
     }
 
-    public static void AddScanCube(GridSplitter splitter)
-    {
-        startScan += splitter.ResetScanGrid;
-        updateGridVisual += splitter.VisualUpdateRequest;
-    }
+    //public static void AddScanCube(SprayableObject sprayableObject)
+    //{
+    //    startScan += sprayableObject.ResetScanGrid;
+    //    updateGridVisual += sprayableObject.VisualUpdateRequest;
+    //}
 
     public static void AddStartPoint(StartPoint start)
     {
-        updateGridVisual += start.VisualUpdateRequest;
+        //updateGridVisual += start.VisualUpdateRequest;
     }
 
     public static void ResetScanGrid()

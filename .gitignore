@@ -69,3 +69,10 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# Level Models
+/[Aa]ssets/Resources/Models/*
+/[Aa]ssets/Resources/Prefabs/Level Elements/*
+
+# Shapes
+/[Aa]ssets/Shapes/*

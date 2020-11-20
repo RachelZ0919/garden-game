@@ -7,7 +7,7 @@ public class PreColor : MonoBehaviour
     public WaterColor color;
     Vector3 centerPointOffset = new Vector3(0.5f, 0, 0.5f);
     private bool hasFilled = false;
-    LevelCube cube;
+    //LevelCube cube;
     LevelGrid grid;
     Vector3 hitPoint;
     // Start is called before the first frame update
@@ -19,8 +19,8 @@ public class PreColor : MonoBehaviour
         if (Physics.Raycast(transform.position + transform.TransformVector(centerPointOffset) + transform.TransformDirection(Vector3.up) * 0.5f, transform.TransformDirection(Vector3.down), out hit, 1.2f, layerMask))
         {
             hitPoint = hit.point;
-            cube = hit.collider.GetComponent<LevelCube>();
-            grid = cube.GetGridAtPosition(hit.point);
+            //cube = hit.collider.GetComponent<LevelCube>();
+            //grid = cube.GetGridAtPosition(hit.point);
         }
     }
 
@@ -29,7 +29,7 @@ public class PreColor : MonoBehaviour
         if (!hasFilled)
         {
             hasFilled = true;
-            cube.FillAtPosition(hitPoint, color);
+            //cube.FillAtPosition(hitPoint, color);
             grid.SprayWater(color);
         }
 
